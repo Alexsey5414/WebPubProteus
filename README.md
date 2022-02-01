@@ -1,2 +1,2 @@
-# WebPubProteus
-Источник для графаны
+# WebProteus
+Пример создания источника для графаны SimpleJson
