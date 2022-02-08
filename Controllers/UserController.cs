@@ -14,13 +14,18 @@ using WebTestProteus.Classes;
 using WebTestProteus.Models;
 using Newtonsoft.Json.Serialization;
 using SimpleJsonDataSource;
+using Microsoft.Extensions.Logging;
+using NLog;
 
 namespace WebTestProteus.Controllers
 {
+  
     [Route("api/[controller]")]
     public class UserController : Controller
     {
-        private readonly ApiContext _context;
+        private readonly DBContextMemory _context;
+        private readonly ILogger<UserController> _logger;
+        private readonly Logger logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
         private List<string> reports = new List<string>() {"RUN_PREPARE_CURRENCY",
                                                             "FIX_SIMPLE_REPORT",
         "REP_SVOD_MANY_CURR",
@@ -30,44 +35,94 @@ namespace WebTestProteus.Controllers
         "REP_TWO_COUNTRY_TWISE",
         "REP_RECALC_PACK",
         "REP_LIST_RC",
-        "REP_CONTROL_VEDOM"};
-        public UserController(ApiContext context)
+        "REP_CONTROL_VEDOM",
+        "REP_SVOD_MANY_CURR1",
+        "REP_BAGS_RECALS2",
+        "REP_ABOUT_RECALC_REQUEST3",
+        "GET_REQ_ASHAN_ATAK4",
+        "REP_TWO_COUNTRY_TWISE5",
+        "REP_RECALC_PACK6",
+        "REP_LIST_RC7",
+        "REP_CONTROL_VEDOM8",
+
+        "RUN_PREPARE_CURRENCY_NOW",
+        "FIX_SIMPLE_REPORT_NOW",
+        "REP_SVOD_MANY_CURR_NOW",
+        "REP_BAGS_RECALS_NOW",
+        "REP_ABOUT_RECALC_REQUEST_NOW",
+        "GET_REQ_ASHAN_ATAK_NOW",
+        "REP_TWO_COUNTRY_TWISE_NOW",
+        "REP_RECALC_PACK_NOW",
+        "REP_LIST_RC_NOW",
+        "REP_CONTROL_VEDOM_NOW",
+        "REP_SVOD_MANY_CURR1_NOW",
+        "REP_BAGS_RECALS2_NOW",
+        "REP_ABOUT_RECALC_REQUEST3_NOW",
+        "GET_REQ_ASHAN_ATAK4_NOW",
+        "REP_TWO_COUNTRY_TWISE5_NOW",
+        "REP_RECALC_PACK6_NOW",
+        "REP_LIST_RC7_NOW",
+        "REP_CONTROL_VEDOM8_NOW"};
+        public UserController(DBContextMemory context, ILogger<UserController> logger)
         {
             _context = context;
-          //  context.AddTestData();
+            _logger = logger;
+
+            //  context.AddTestData();
+        }
+
+        private void LogMsg(string SessionId, int NumId, string ReportName, string MeasureName, int duration)
+        {
+            // NLog: setup the logger first to catch all errors
+           // var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            LogEventInfo theEvent = new LogEventInfo(NLog.LogLevel.Trace, "database", MeasureName);
+            theEvent.Properties["duration"] = duration;
+            theEvent.Properties["sessionid"] = SessionId;
+            theEvent.Properties["numid"] = NumId;
+            theEvent.Properties["reportname"] = ReportName;
+    
+            // theEvent.Properties["MyDateTimeValueWithCultureAndFormat"] = new DateTime(2015, 08, 30, 11, 26, 50);
+            logger.Log(theEvent);
+
         }
 
         private int GetJob(Random _rng)
         {   
             //  OracleConnection  ora 
             int threadid = Thread.CurrentThread.ManagedThreadId;
-            var index = _rng.Next(0, 9);
+            var index = _rng.Next(0, 32);
             var ReportName = reports[index];
             var SessionId = Guid.NewGuid().ToString();
             //_context.AddMetric("Session1", "REPORT_NAME", "load");
             using (_context.NewDelay(SessionId, 1, ReportName, "load"))
             {
                   var idelay1 = _rng.Next(80, 200) * 10;
-
+                LogMsg(SessionId, 1, ReportName, "load", idelay1);
+                // _logger.LogTrace(new EventId(idelay1), "load");
                 Thread.Sleep(idelay1);
             }
+           
 
             using (_context.NewDelay(SessionId, 2, ReportName, "prepare"))
             {
-                var idelay1 = _rng.Next(150, 400) * 10;
-
+                var idelay1 = _rng.Next(200, 300) * 10;
+                //  _logger.LogTrace(new EventId(idelay1), "prepare");
+                LogMsg(SessionId, 2, ReportName, "prepare", idelay1);
                 Thread.Sleep(idelay1);
             }
             using (_context.NewDelay(SessionId, 3, ReportName, "export"))
             {
-                var idelay1 = _rng.Next(50, 300) * 10;
+                var idelay1 = _rng.Next(100, 300) * 10;
+                //  _logger.LogTrace(new EventId(idelay1), "export");
+                LogMsg(SessionId, 3, ReportName, "export", idelay1);
                 Thread.Sleep(idelay1);
             }
 
             using (_context.NewDelay(SessionId, 4, ReportName, "runmacros"))
             {
                 var idelay1 = _rng.Next(10, 250) * 10;
-
+                LogMsg(SessionId, 4, ReportName, "runmacros", idelay1);
+                //  _logger.LogTrace(new EventId(idelay1), "runmacros");
                 Thread.Sleep(idelay1);
             }
 
@@ -94,10 +149,30 @@ namespace WebTestProteus.Controllers
         [HttpPost("search")]
         public IActionResult Search([FromBody]string value)
         {
-            return Ok(_context.GetMeasures());
+            return Ok(_context.GetOperations());
         }
 
 
+        [HttpPost("tag-keys")]
+        public IActionResult TagKeys([FromBody] string value)
+        {
+            return Ok(_context.GetTagKeys());
+        }
+
+        [HttpPost("tag-values")]
+        public IActionResult TagValues([FromBody] string value)
+        {
+            return Ok(_context.GetTagValues());
+        }
+
+
+        //[HttpPost("annotations")]
+        //public IActionResult TagValues([FromBody] AnnotationModel value)
+        //{
+        //    return Ok(_context.GetAnnotations(value));
+        //}
+
+        
 
         [HttpPost("help")]
         public IActionResult Help([FromBody] QueryModel query)
@@ -138,7 +213,7 @@ namespace WebTestProteus.Controllers
 
 
         [HttpPost("query")]
-        public IActionResult Query([FromBody] QueryModel query)
+        public async Task<IActionResult> QueryAsync([FromBody] QueryModel query)
 
         {
             if (!ModelState.IsValid)
@@ -151,8 +226,8 @@ namespace WebTestProteus.Controllers
             //  var dataFrom = query.Range.From - halfSmoothingWindow;
             //   var dataTo = query.Range.To + halfSmoothingWindow;
 
-            var dataFrom = query.range.from;
-            var dataTo = query.range.to;
+          //  var dataFrom = query.range.from;
+          //  var dataTo = query.range.to;
 
             //    //var samplingInterval = new TimeSpan(query.IntervalMs * TimeSpan.TicksPerMillisecond);
             //    //  return Ok(query);
@@ -166,13 +241,15 @@ namespace WebTestProteus.Controllers
             //                          target,
             //                          _context.GetDataPoints(target, dataFrom, dataTo).Select(p => new double[] {p.Value, p.UnixTimeStamp }).ToArray()
             //                        )).ToArray()) ;
-            return Ok(query.targets.Select(t => t.target).Select(target => _context.GetMetrics(target)).SelectMany(p=>p)
-                               .Select(target => new TimeSeriesGroupModel<object>
-                                (
-                                   target.Key,
-                                  // target.Replace("ots_", "").Replace("pts_", ""),
-                                  _context.GetDataPointSource(target, dataFrom, dataTo)//.Select(p => new object[] { p.Value, p.Measure}).ToArray()
-                                )).ToArray());
+            //return Ok(query.targets.Select(t => t.target).Select(target => _context.GetMetrics(target, dataFrom, dataTo)).SelectMany(p=>p)
+            //                   .Select(target => new TimeSeriesGroupModel<object>
+            //                    (
+            //                       target.Key,
+            //                      // target.Replace("ots_", "").Replace("pts_", ""),
+            //                      _context.GetDataPointSource(target, dataFrom, dataTo)//.Select(p => new object[] { p.Value, p.Measure}).ToArray()
+            //                    )).Where(target=> target.DataPoints.Count() > 0).ToArray());
+
+            return Ok(await _context.GetDataSeriesAsync(query));
         }
 
         //[HttpPost("query1")]
@@ -244,13 +321,13 @@ namespace WebTestProteus.Controllers
         //}
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(int id = 1000)
         {
 
             var rng = new Random();
   
             //return new int[] { 1, 2, 3 };
-            var result = Enumerable.Range(1, 1000).AsParallel().AsOrdered().WithDegreeOfParallelism(10).Select(x => GetJob(rng)).ToList();
+            var result = Enumerable.Range(1, id).AsParallel().AsOrdered().WithDegreeOfParallelism(10).Select(x => GetJob(rng)).ToList();
  
             var metrics = await _context.ReportMetrics.OrderBy(r=>r.ThreadId).ThenBy(r=>r.NumId).ToArrayAsync();
 

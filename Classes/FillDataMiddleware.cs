@@ -20,7 +20,7 @@ namespace WebTestProteus.Classes
     public class FillDataMiddleware
     {
        // private ApiContext _apicontext;
-        public FillDataMiddleware(ApiContext apicontext)
+        public FillDataMiddleware(DBContextMemory apicontext)
         {
            // _apicontext = apicontext;
       

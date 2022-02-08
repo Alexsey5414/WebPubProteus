@@ -49,6 +49,14 @@ namespace WebTestProteus.Models
         public string to { get; set; }
     }
 
+    public class adhocFilters
+    {
+        public string condition { get; set; }
+        public string key { get; set; }
+        public string @operator { get; set; }
+        public string value { get; set; }
+    }
+    
     public class QueryModel
     {
         public string app { get; set; }
@@ -65,7 +73,23 @@ namespace WebTestProteus.Models
         public ScopedVars scopedVars { get; set; }
         public long startTime { get; set; }
         public RangeRaw rangeRaw { get; set; }
-        public List<object> adhocFilters { get; set; }
+        public List<adhocFilters> adhocFilters { get; set; }
+    }
+
+    public class Annotation
+    {
+        public string name { get; set; }
+        public string datasource { get; set; }
+        public string iconColor { get; set; }
+        public bool enable { get; set; }
+        public string query { get; set; }
+    }
+
+    public class AnnotationModel
+    {
+        public Range range { get; set; }
+        public RangeRaw rangeRaw { get; set; }
+        public Annotation annotation { get; set; }
     }
 
 

@@ -40,7 +40,7 @@ namespace WebTestProteus
             // Microsoft.Extensions.Caching.Memory.MemoryCache mem = new Microsoft.Extensions.Caching.Memory.MemoryCache(new MemoryCacheOptions());
 
         //    services.AddDbContext<ApiContext>(ServiceLifetime.Singleton);
-             services.AddDbContext<ApiContext>(opt=>opt.UseInMemoryDatabase("test"));
+             services.AddDbContext<DBContextMemory>(opt=>opt.UseInMemoryDatabase("test"));
             // services.AddDbContext<ApiContext>(opt => opt.UseMemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCache(new MemoryCacheOptions())));
             services.AddMvc()
             .AddJsonOptions(options =>
@@ -84,8 +84,10 @@ namespace WebTestProteus
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
-                endpoints.MapMetrics();
+                 endpoints.MapControllers();
+              //  endpoints.MapControllerRoute("default", "{controller=User}/{action=Get}/{id?}");
+                //endpoints.MapControllerRoute(name: "default",
+                //            pattern: "{controller=Home}/{action=Index}/{id?}");
             });
 
   

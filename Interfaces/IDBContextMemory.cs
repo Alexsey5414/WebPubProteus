@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace WebTestProteus.Interfaces
 {
-    public interface IApiContext
+    public interface IDBContextMemory
     {
 
     }

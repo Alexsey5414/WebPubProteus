@@ -27,8 +27,8 @@ namespace WebTestProteus.Controllers
         public static string CancelMsg { get { return "_CancelMsg"; } }
         public static string CancelTokenSource { get { return "_CancelTokenSource"; } }
     }
-
     [ApiController]
+
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
@@ -121,20 +121,20 @@ namespace WebTestProteus.Controllers
             {
                 Thread.Sleep(idelay1);
             };
-            _logger.LogTrace(new EventId(idelay1), "prepare");
+         //   _logger.LogTrace(new EventId(idelay1), "prepare");
 
             var idelay2 = _rng.Next(10, 150) * 10;
             using (LoginDuration.WithLabels("export", thId).NewTimer())
             {
                 Thread.Sleep(idelay2);
             };
-            _logger.LogTrace(new EventId(idelay2), "export");
+         //   _logger.LogTrace(new EventId(idelay2), "export");
             var idelay3 = _rng.Next(10, 300) * 10;
             using (LoginDuration.WithLabels("load", thId).NewTimer())
             {
                 Thread.Sleep(idelay3);
             };
-            _logger.LogTrace(new EventId(idelay3), "load");
+         //   _logger.LogTrace(new EventId(idelay3), "load");
             return threadid;
         }
 

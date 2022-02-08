@@ -17,6 +17,7 @@ namespace WebTestProteus
         {
             // NLog: setup the logger first to catch all errors
             var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+        
             try
             {
                 logger.Debug("init main");
