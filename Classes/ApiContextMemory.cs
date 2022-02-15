@@ -3,26 +3,34 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
+//using System.Data.Entity;
 
 namespace WebTestProteus.Classes
 {
     using SimpleJsonDataSource.ViewModels;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Threading.Tasks;
     using WebTestProteus.Consts;
     using WebTestProteus.Interfaces;
     using WebTestProteus.Models;
     using WebTestProteus.Models.DataJson;
+    using System.Collections.Generic;
 
-    public class DBContextMemory : DbContext, IDBContextMemory
-
+    // public class DBContextMemory : DbContext, IDBContextMemory
+    public class DBContextMemory: IDBContextMemory
     {
-        static object locker = new object();
-        public DBContextMemory(DbContextOptions<DBContextMemory> options) : base(options)
-        {
-       
-        }
+        private static readonly object locker = new object();
+        //Mutex mutexObj = new Mutex();
+        private static readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+
+      //  public SynchronizedCollection<ReportMetric> ReportMetrics { get; set; } = new SynchronizedCollection<ReportMetric>();
+        public List<ReportMetric> ReportMetrics { get; set; } = new List<ReportMetric>(3000);
+
+        //public DBContextMemory(DbContextOptions<DBContextMemory> options, Mutex _mutexObj) : base(options)
+        //{
+        //  //  mutexObj = _mutexObj;
+        //}
         //Получение метрик мониторинга потоков
         private IEnumerable<string> GetTargetThreads(DateTime startDateTime, DateTime endDateTime) => ReportMetrics.
                                                     Where(p => (p.UtcDateTime >= startDateTime) && (p.UtcDateTime <= endDateTime)).
@@ -31,8 +39,8 @@ namespace WebTestProteus.Classes
                                                     Where(g => g.Count < ConstParameters.CountMonitorOperation).
                                                     GroupBy(g => g.ThreadId).
                                                     OrderBy(g => g.Key).
-                                                    Select(s => $"thread{s.Key}").
-                                                    Take(10);
+                                                    Select(s => $"thread{s.Key}");
+                                                   // Take(10);
         //Получение метрик мониторинга отчетов
         private IEnumerable<string> GetTargetReports(DateTime startDateTime, DateTime endDateTime) => ReportMetrics.
                                                 Where(p => (p.UtcDateTime >= startDateTime) && (p.UtcDateTime <= endDateTime)).
@@ -90,11 +98,15 @@ namespace WebTestProteus.Classes
         public IEnumerable<string> GetOperations() => new string[] { ConstParameters.Operations, ConstParameters.LastOperations, ConstParameters.DoneReportCount, 
                                                                       ConstParameters.DoneReportDuration, ConstParameters.ThreadCount, ConstParameters.Threads, 
                                                                       ConstParameters.CurrentReportDuration };
-
+        public async Task<IEnumerable<string>> GetOperationsAsync() => await Task.FromResult(GetOperations());
         //Наименование параметра для adHocFilter фильтра
         public IEnumerable<object> GetTagKeys() => new object[] { new { type = "string", text = ConstParameters.firstTopTagKeys } };
         //Значение adHocFilter фильтра
         public IEnumerable<object> GetTagValues() => Enumerable.Range(1, 5).Select(p => new { text = $"{p * 10}" });
+        
+        public void RemoveMetricByDelay(int DelayInMs) => ReportMetrics.Where(x => x.UtcDateTime < DateTime.UtcNow.AddSeconds(-1 * DelayInMs)).ToList().ForEach(rep => ReportMetrics.Remove(rep));
+        public void RemoveMetricBySize(int NumRecord) => ReportMetrics.Where(x => x.id > NumRecord).ToList().ForEach(rep => ReportMetrics.Remove(rep));
+
         private IEnumerable<string> GetEmpty() => new string[] { };
 
         private object[][] RunFunc<T, Y>(Func<List<DataPointTimeSeries<T, Y>>> func)
@@ -149,7 +161,7 @@ namespace WebTestProteus.Classes
                                                      DateTime endDateTime, List<adhocFilters> hocFilters)
         {
             IDictionary<string, Measures> result = null;
-            var topValue = Convert.ToInt32(hocFilters.FirstOrDefault(af => ConstParameters.firstTopTagKeys.Equals(af.key, StringComparison.OrdinalIgnoreCase))?.value);
+            var topValue = Convert.ToInt32(hocFilters.FirstOrDefault(af => ConstParameters.firstTopTagKeys.Equals(af.Key, StringComparison.OrdinalIgnoreCase))?.Value);
            switch (targetName)
            {
                 case ConstParameters.Operations: 
@@ -186,18 +198,19 @@ namespace WebTestProteus.Classes
                    break;
 
            }
+
            return result;
        }
        
         public async Task<TimeSeriesGroupModel<object>[]> GetDataSeriesAsync(QueryModel query) =>
-           await Task.Run(()=>query.targets.Select(t => t.target).
-                                               Select(target => GetTargetMetrics(target, query.range.from, query.range.to, 
-                                                                           query.adhocFilters)).
+           await Task.Run(()=>query.Targets.Select(t => t.target).
+                                               Select(target => GetTargetMetrics(target, query.Range.From, query.Range.To, 
+                                                                           query.AdhocFilters)).
                                                SelectMany(p => p)
                                .Select(target => new TimeSeriesGroupModel<object>
                                 (
                                    target.Key,
-                                   GetDataPointSource(target, query.range.from, query.range.to)
+                                   GetDataPointSource(target, query.Range.From, query.Range.To)
                                 )).Where(target => target.DataPoints.Any()).ToArray());
         private List<DataPointTimeSeries<double, long>> GetDataTimeSeries(DateTime startDateTime, DateTime endDateTime, string MeasureName)
               => ReportMetrics.Where(p => (string.IsNullOrEmpty(MeasureName) || MeasureName.Contains(p.MeasureName)) 
@@ -251,10 +264,10 @@ namespace WebTestProteus.Classes
         {
             var cnt_thread = ReportMetrics.Where(p => (p.UtcDateTime >= startDateTime)
                                      && (p.UtcDateTime <= endDateTime)).
-                                      GroupBy(g =>  new { g.SessionId, g.ThreadId } ).
+                                      GroupBy(g => new { g.SessionId, g.ThreadId }).
                                  Select(g => new { g.Key.ThreadId, Count = g.Count() }).
-                                 Where(g => g.Count < ConstParameters.CountMonitorOperation).
-                                 GroupBy(g => g.ThreadId).Take(10).Count();
+                                  Where(g => g.Count < ConstParameters.CountMonitorOperation).
+                                 GroupBy(g => g.ThreadId).Count();//.Take(10).Count();
             return new List<DataPointTimeSeries<int, string>>() { new DataPointTimeSeries<int, string>( cnt_thread, ConstMetrics.threadcount) };
         }
 
@@ -266,58 +279,99 @@ namespace WebTestProteus.Classes
                                                   .Select(p => new DataPointTimeSeries<double, long>(p.Duration, p.UtcUnixTime)).ToList();
         }
 
-     private void _AddMetric(string SessionId, int NumId, string ReportName, string MeasureName, double Duration)
+     private void AddMetric(string SessionId, int NumId, string ReportName, string MeasureName, double Duration)
         {
-            ReportMetrics.RemoveRange(ReportMetrics.Where(x => x.UtcDateTime < DateTime.UtcNow.AddSeconds(-3600)));
 
-            var reportMetric = new ReportMetric
-            {
-                SessionId = SessionId,
-                NumId = NumId,
-                ReportName = ReportName,
-                MeasureName = MeasureName,
-                Duration = Duration
-            };
+            //   ReportMetrics.Where(x => x.UtcDateTime < DateTime.UtcNow.AddSeconds(-3600)).ToList().ForEach(rep => ReportMetrics.Remove(rep));
+          //  lock (locker)
+          //  {
+                var reportMetric = new ReportMetric
+                {
+                    SessionId = SessionId,
+                    NumId = NumId,
+                    ReportName = ReportName,
+                    MeasureName = MeasureName,
+                    Duration = Duration,
+                    id = ReportMetrics.Count
+                };
 
             ReportMetrics.Add(reportMetric);
-            
-            SaveChanges();
+         //   }
+
+           //  await ReportMetrics.AddAsync(reportMetric);
+
+            // return await SaveChangesAsync();
 
         }
+
+        private async Task AddMetricAsync(ReportMetric reportMetric)
+        {
+            //await semaphoreSlim.WaitAsync();
+            //try
+            lock(locker)
+            {
+                reportMetric.id = ReportMetrics.Count + 1;
+                ReportMetrics.Add(reportMetric);
+            }
+            //finally
+            //{
+            //    semaphoreSlim.Release();
+            //}
+        }
+
+        private void AddMetric(ReportMetric reportMetric)
+        {
+            //await semaphoreSlim.WaitAsync();
+            //try
+            lock (locker)
+            {
+                reportMetric.id = ReportMetrics.Count + 1;
+                ReportMetrics.Add(reportMetric);
+            }
+            //finally
+            //{
+            //    semaphoreSlim.Release();
+            //}
+        }
+
 
         public IDelayer NewDelay(string SessionId, int NumId,  string ReportName, string MeasureName)
         {
             IDelayer delayer = new Dalayer(new ReportMetric() { SessionId = SessionId, NumId = NumId, ReportName = ReportName, MeasureName = MeasureName });
-                    delayer.OnDelay += (ReportMetric rm) => 
-                                          AddMetric(rm.SessionId, rm.NumId, rm.ReportName, rm.MeasureName, rm.Duration);
+            //  delayer.OnDelay +=  async (ReportMetric rm) => await AddMetricAsync(rm);
+            delayer.OnDelay +=  (ReportMetric rm) =>  AddMetric(rm);
+
              return delayer;
 
         }
-        public void AddMetric(string SessionId, int NumId, string ReportName, string MeasureName, double Duration)
-        {
-            lock (locker)
-            {
-                _AddMetric(SessionId, NumId, ReportName, MeasureName, Duration);
-            }
-        }
+        //public void AddMetric(string SessionId, int NumId, string ReportName, string MeasureName, double Duration)
+        //{
 
-        public void AddMetric(string SessionId, int NumId, string ReportName, string MeasureName, Action _action)
-        {
-            lock (locker)
-            {
-                var sw = Stopwatch.StartNew();
-                try
-                {
-                    _action();
-                }
-                finally
-                {
-                    sw.Stop();
-                }
-                _AddMetric(SessionId, NumId, ReportName, MeasureName, sw.ElapsedMilliseconds / 1000);
-            }
-        }
+        //    lock (locker)
+        //    { 
+        //        _AddMetric(SessionId, NumId, ReportName, MeasureName, Duration);
+        //    }
+        // }
+
+        //public void AddMetric(string SessionId, int NumId, string ReportName, string MeasureName, Action _action)
+        //{
+        //    lock (locker)
+        //    {
+        //        var sw = Stopwatch.StartNew();
+        //        try
+        //        {
+        //            _action();
+        //        }
+        //        finally
+        //        {
+        //            sw.Stop();
+        //        }
+        //        _AddMetric(SessionId, NumId, ReportName, MeasureName, sw.ElapsedMilliseconds / 1000);
+        //    }
+        //}
         
-        public DbSet<ReportMetric> ReportMetrics { get; set; }
+      //  public DbSet<ReportMetric> ReportMetrics { get; set; }
+
+       //  public ReportMetric ReportMetrics { get; private set; }
     }
 }

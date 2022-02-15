@@ -28,6 +28,7 @@ namespace SimpleJsonDataSource.ViewModels
 
 		public string Target { get; }
 		[JsonPropertyName("datapoints")]
+		//[JsonProperty("datapoints")]
 		public double[][] DataPoints { get; }
 	}
 
@@ -41,6 +42,7 @@ namespace SimpleJsonDataSource.ViewModels
 
 		public string Target { get; }
 		[JsonPropertyName("datapoints")]
+		//[JsonProperty("datapoints")]
 		public T[][] DataPoints { get; }
 	}
 }

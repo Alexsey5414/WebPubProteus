@@ -11,7 +11,7 @@ namespace WebTestProteus.Classes
     public class ReportMetric
     {
         [Key]
-        public int id { get; set; }
+        public int id { get; set; } 
         public int NumId { get; set; }
         public string SessionId { get; set; }
         public string ReportName { get; set; }

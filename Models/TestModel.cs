@@ -7,34 +7,34 @@ namespace WebTestProteus.Models
 {// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse); 
     public class Raw
     {
-        public string from { get; set; }
-        public string to { get; set; }
+        public string From { get; set; }
+        public string To { get; set; }
     }
 
     public class Range
     {
-        public DateTime from { get; set; }
-        public DateTime to { get; set; }
-        public Raw raw { get; set; }
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+        public Raw Raw { get; set; }
     }
 
     public class Target
     {
         public string target { get; set; }
-        public string refId { get; set; }
-        public string type { get; set; }
+        public string RefId { get; set; }
+        public string Type { get; set; }
     }
 
     public class Interval
     {
-        public string text { get; set; }
-        public string value { get; set; }
+        public string Text { get; set; }
+        public string Value { get; set; }
     }
 
     public class IntervalMs
     {
-        public string text { get; set; }
-        public int value { get; set; }
+        public string Text { get; set; }
+        public int Value { get; set; }
     }
 
     public class ScopedVars
@@ -45,51 +45,51 @@ namespace WebTestProteus.Models
 
     public class RangeRaw
     {
-        public string from { get; set; }
-        public string to { get; set; }
+        public string From { get; set; }
+        public string To { get; set; }
     }
 
     public class adhocFilters
     {
-        public string condition { get; set; }
-        public string key { get; set; }
-        public string @operator { get; set; }
-        public string value { get; set; }
+        public string Condition { get; set; }
+        public string Key { get; set; }
+        public string Operator { get; set; }
+        public string Value { get; set; }
     }
     
     public class QueryModel
     {
-        public string app { get; set; }
-        public string requestId { get; set; }
-        public string timezone { get; set; }
-        public long panelId { get; set; }
-        public object dashboardId { get; set; }
-        public Range range { get; set; }
-        public string timeInfo { get; set; }
-        public string interval { get; set; }
-        public int intervalMs { get; set; }
-        public List<Target> targets { get; set; }
-        public int maxDataPoints { get; set; }
-        public ScopedVars scopedVars { get; set; }
-        public long startTime { get; set; }
-        public RangeRaw rangeRaw { get; set; }
-        public List<adhocFilters> adhocFilters { get; set; }
+        public string App { get; set; }
+        public string RequestId { get; set; }
+        public string Timezone { get; set; }
+        public long PanelId { get; set; }
+        public object DashboardId { get; set; }
+        public Range Range { get; set; }
+        public string TimeInfo { get; set; }
+        public string Interval { get; set; }
+        public int IntervalMs { get; set; }
+        public List<Target> Targets { get; set; }
+        public int MaxDataPoints { get; set; }
+        public ScopedVars ScopedVars { get; set; }
+        public long StartTime { get; set; }
+        public RangeRaw RangeRaw { get; set; }
+        public List<adhocFilters> AdhocFilters { get; set; }
     }
 
     public class Annotation
     {
-        public string name { get; set; }
-        public string datasource { get; set; }
-        public string iconColor { get; set; }
-        public bool enable { get; set; }
-        public string query { get; set; }
+        public string Name { get; set; }
+        public string Datasource { get; set; }
+        public string IconColor { get; set; }
+        public bool Enable { get; set; }
+        public string Query { get; set; }
     }
 
     public class AnnotationModel
     {
-        public Range range { get; set; }
-        public RangeRaw rangeRaw { get; set; }
-        public Annotation annotation { get; set; }
+        public Range Range { get; set; }
+        public RangeRaw RangeRaw { get; set; }
+        public Annotation Annotation { get; set; }
     }
 
 

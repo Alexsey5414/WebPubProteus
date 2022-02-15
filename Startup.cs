@@ -6,7 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prometheus;
 using System;
+using System.Threading;
 using WebTestProteus.Classes;
+using WebTestProteus.Interfaces;
 
 namespace WebTestProteus
 {
@@ -40,7 +42,8 @@ namespace WebTestProteus
             // Microsoft.Extensions.Caching.Memory.MemoryCache mem = new Microsoft.Extensions.Caching.Memory.MemoryCache(new MemoryCacheOptions());
 
         //    services.AddDbContext<ApiContext>(ServiceLifetime.Singleton);
-             services.AddDbContext<DBContextMemory>(opt=>opt.UseInMemoryDatabase("test"));
+           //  services.AddDbContext<DBContextMemory>(opt=>opt.UseInMemoryDatabase("test"), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+            services.AddSingleton<IDBContextMemory, DBContextMemory>();
             // services.AddDbContext<ApiContext>(opt => opt.UseMemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCache(new MemoryCacheOptions())));
             services.AddMvc()
             .AddJsonOptions(options =>

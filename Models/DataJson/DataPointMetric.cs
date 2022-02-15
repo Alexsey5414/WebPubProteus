@@ -1,9 +1,9 @@
 ﻿using System;
-using Newtonsoft.Json;
+//using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using System.Text.Json.Serialization;
 namespace WebTestProteus.Models.DataJson
 {
     public struct DataPointByMeasure<T>
@@ -16,10 +16,12 @@ namespace WebTestProteus.Models.DataJson
 
         }
 
-        [JsonProperty("value")]
+        // [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public T Value { get; }
 
-        [JsonProperty("datetime")]
+        // [JsonProperty("datetime")]
+        [JsonPropertyName("datetime")]
         public DateTime DateTime { get; }
 
     }
@@ -34,11 +36,13 @@ namespace WebTestProteus.Models.DataJson
 
 		}
 
-		[JsonProperty("value")]
-		public T Value { get; }
+        //[JsonProperty("value")]
+        [JsonPropertyName("value")]
+        public T Value { get; }
 
-		[JsonProperty("measure")]
-		public Y Measure { get; }
+        //[JsonProperty("measure")]
+        [JsonPropertyName("measure")]
+        public Y Measure { get; }
 
 	}
 
